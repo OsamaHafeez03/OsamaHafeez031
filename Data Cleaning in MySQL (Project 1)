@@ -2,218 +2,96 @@ SQL Project - Data Cleaning
 
 --https://www.kaggle.com/datasets/swaptr/layoffs-2022
 
-Select *
-From layoffs;
+   Select *
+   From layoffs;
 
 
--- 1 Remove Duplicate
--- 2 Standardize the Data
--- 3 Null values 0r blanks
--- 4 Remove unnecessary columns
+-- Remove duplicates
+-- Standardized the Data
+-- Null values or Blank value
+-- Remove any columns.
+
+-- the first thing we want to do is create a staging table. 
+
+CREATE TABLE layoffs_staging 
+LIKE layoffs;
 
 
-Create table layoffs_staging
-Like layoffs;
-
-
-Select *
-From layoffs_staging;
-
-
-Insert layoffs_staging
 select *
+From layoffs_staging ;
+
+
+insert layoffs_staging
+Select * 
 From layoffs;
 
 
-Select *,
-row_number() Over( Partition by company, location, industry, total_laid_off, percentage_laid_off,
-`date`, stage, country, funds_raised_millions) as row_num
+- Identify duplicates
+
+
+select *,
+Row_Number() Over( partition by company, location, industry, 
+total_laid_off, percentage_laid_off, `date`) As row_num
 From layoffs_staging;
 
 
-With duplicate_cte AS
-(Select *,
-row_number() Over( Partition by company, location, industry, total_laid_off, percentage_laid_off,
-`date`, stage, country, funds_raised_millions) as row_num
+With duplicate_cte As
+(select *,
+Row_Number() Over( partition by company, location, industry, 
+total_laid_off, percentage_laid_off, `date`) As row_num
 From layoffs_staging)
 Select *
 From duplicate_cte
 Where row_num > 1;
 
 
-Select *
-From layoffs_staging
-Where company = 'Casper';
+--- just look at Oda to confirm
+
+select *
+From layoffs_staging 
+Where company =  'Oda';
 
 
-With duplicate_cte AS
-(Select *,
-row_number() Over( Partition by company, location, industry, total_laid_off, percentage_laid_off,
-`date`, stage, country, funds_raised_millions) as row_num
+-- As we check they are not duplicates so put eveything insert
+   -- CTE to avoid the confusion
+   
+   With duplicate_cte As
+(select *,
+Row_Number() Over( partition by company, location, industry, 
+total_laid_off, percentage_laid_off, `date`, stage, country,
+funds_raised_millions) As row_num
 From layoffs_staging)
-Delete
+Select *
 From duplicate_cte
 Where row_num > 1;
 
-
-REATE TABLE `layoffs_staging2` (
-  `company` text,
-  `location` text,
-  `industry` text,
-  `total_laid_off` int DEFAULT NULL,
-  `percentage_laid_off` text,
-  `date` text,
-  `stage` text,
-  `country` text,
-  `funds_raised_millions` int DEFAULT NULL,
-  `row_num` int
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-
-Select *
-From layoffs_staging2;
-
-
-Insert into layoffs_staging2
-Select *,
-row_number() Over( Partition by company, location, industry, total_laid_off, percentage_laid_off,
-`date`, stage, country, funds_raised_millions) as row_num
-From layoffs_staging;
-
-
-Select *
-From layoffs_staging2
-Where row_num > 1;
-
-
-Delete
-From layoffs_staging2
-Where row_num >1;
-
-
-Select *
-From layoffs_staging2;
-
-
-                                     -- Standardizing Data
-
-Select company, Trim(company)
-From layoffs_staging2;
-
-
-Update layoffs_staging2
-Set company = Trim(company);
-
-
-Select distinct industry
-From layoffs_staging2
-Order by 1;
-
-
-Select *
-From layoffs_staging2
-Where industry like 'Crypto%';
-
-
-Select distinct industry
-From layoffs_staging2
-Order by 1;
-
-
-Update layoffs_staging2
-Set industry = 'Crypto'
-Where industry like 'Crypto%';
-
-
-Select distinct country
-From layoffs_staging2
-Order by 1;
-
-
-Select distinct country, Trim(trailing '.' From country) 
-From layoffs_staging2
-Order by 1;
-
-
-Update layoffs_staging2
-Set country = Trim(trailing '.' From country) 
-Where country like 'United States%';
-
-
-Select `date`
-From layoffs_staging2;
-
-
-Update layoffs_staging2
-Set `date` =  Str_to_date(`date`, '%m/%d/%Y');
-
-
-ALTER TABLE layoffs_staging2
-Modify column `date` Date;
-
-
-                                         Null values 0r blanks
-
-
+-- Again check Cazoo for confirmation
 select *
-From layoffs_staging2
-Where total_laid_off is NUll
-And percentage_laid_off is null;
+From layoffs_staging 
+Where company =  'Cazoo';
 
 
-select *
-From layoffs_staging2
-Where industry is null 
-Or industry = '';
+-- In my SQL We directly don't delete the columns.
 
-
-select *
-From layoffs_staging2
-Where company like 'Bally%';
-
-
-update layoffs_staging2
-set industry = null
-Where industry = '';
-
-
-select t1.industry, t2.industry
-From layoffs_staging2 t1
-Join layoffs_staging2 t2
- on t1.company = t2.company
-Where t1.industry is null 
-And (t2.industry is not null);
-
-
-Update layoffs_staging2 t1
-Join layoffs_staging2 t2
- on t1.company = t2.company
- Set  t1.industry  = t2.industry 
- Where t1.industry is null 
-And (t2.industry is not null);
-
-
-select *
-From layoffs_staging2;
-
-
-select *
-From layoffs_staging2
-Where total_laid_off is NUll
-And percentage_laid_off is null;
-
-
-                                                 Remove unnecessary columns
-
-
+ With duplicate_cte As
+(select *,
+Row_Number() Over( partition by company, location, industry, 
+total_laid_off, percentage_laid_off, `date`, stage, country,
+funds_raised_millions) As row_num
+From layoffs_staging)
 delete
-From layoffs_staging2
-Where total_laid_off is NUll
-And percentage_laid_off is null;
+From duplicate_cte
+Where row_num > 1;
 
 
-alter table layoffs_staging2
-drop column row_num;
+
+
+
+
+
+
+
+
 
 
 
